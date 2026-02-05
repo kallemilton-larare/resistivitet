@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laborationssimulering - Resistansledare</title>
+    <style>
+        /* Grundläggande design (ersätter Tailwind) */
+        body {
+            background-color: #f8fafc;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            width: 100%;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+        }
+
+        h1 { margin-bottom: 0.5rem; color: #1e293b; }
+        p { color: #64748b; margin-bottom: 1.5rem; font-size: 0.95rem; }
+
+        /* Kontrollpanelen */
+        .controls {
+            background-color: #f8fafc;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            align-items: flex-end;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            font-size: 0.875rem;
+            color: #334155;
+            margin-bottom: 0.25rem;
+        }
+
+        select, input[type="range"] {
+            width: 100%;
+            cursor: pointer;
+        }
+
+        select {
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            border: 1px solid #cbd5e1;
+        }
+
+        .value-label {
+            float: right;
+            font-family: monospace;
+            color: #64748b;
+            font-size: 0.85rem;
+        }
+
+        /* Grafik och SVG */
+        .svg-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        .circuit-line {
+            stroke: #1e293b;
+            stroke-width: 3;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .component-text {
+            font-family: monospace;
+            font-weight: bold;
+            font-size: 24px;
+            fill: #1e293b;
+            text-anchor: middle;
+            dominant-baseline: middle;
+        }
+
+        .resistor-body, .resistor-face {
+            stroke: #475569;
+            stroke-width: 2;
+            transition: fill 0.3s ease;
+        }
+
+        /* Batteri-reglage flytande */
+        .battery-control {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            z-index: 10;
+            width: 140px;
+            text-align: center;
+        }
+        .battery-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            font-weight: bold;
+            color: #64748b;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+        .voltage-val { color: #ea580c; font-family: monospace; }
+
+        /* Mätknapp */
+        .btn-container {
+            display: flex;
+            justify-content: center;
+            margin-top: -20px;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 20;
+        }
+
+        .btn-measure {
+            background-color: #2563eb;
+            color: white;
+            font-weight: bold;
+            padding: 10px 30px;
+            border-radius: 9999px;
+            border: 4px solid white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            font-size: 1rem;
+            transition: transform 0.1s, background-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-measure:hover { background-color: #1d4ed8; transform: scale(1.05); }
+        .btn-measure:active { transform: scale(0.95); }
+
+        /* Displayer */
+        .display-area {
+            text-align: left;
+            width: 100%;
+        }
+        .display-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 0.5rem;
+            margin-left: 0.25rem;
+        }
+        .display-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        .meter-box {
+            background-color: #0f172a;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border: 2px solid #334155;
+            position: relative;
+            overflow: hidden;
+        }
+        .meter-label {
+            color: #94a3b8;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.25rem;
+        }
+        .meter-value {
+            font-family: monospace;
+            font-size: 1.875rem;
+            font-weight: bold;
+        }
+        .val-amp { color: #34d399; } /* Emerald */
+        .val-volt { color: #f87171; } /* Red */
+
+        /* Animationer */
+        @keyframes flicker {
+            0% { transform: scale(1) rotate(-5deg); opacity: 0.9; }
+            25% { transform: scale(1.1) rotate(5deg); opacity: 1; }
+            50% { transform: scale(0.9) rotate(-5deg); opacity: 0.8; }
+            75% { transform: scale(1.05) rotate(5deg); opacity: 1; }
+            100% { transform: scale(1) rotate(-5deg); opacity: 0.9; }
+        }
+        .fire-anim {
+            transform-origin: center;
+            animation: flicker 0.5s infinite alternate;
+            display: none; /* Dold normalt */
+            pointer-events: none;
+            filter: drop-shadow(0px 0px 10px orange);
+            font-size: 80px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Simulering: Resistivitet</h1>
+        <p>Ställ in ledarens egenskaper och klicka på "Gör mätning".</p>
+        
+        <!-- KONTROLLER -->
+        <div class="controls">
+            <div class="controls-grid">
+                
+                <!-- Materialval -->
+                <div>
+                    <label for="input-material">Material</label>
+                    <select id="input-material">
+                        <option value="constantan">Konstantan</option>
+                        <option value="nichrome">Nikrom</option>
+                        <option value="iron">Järn</option>
+                        <option value="aluminium">Aluminium</option>
+                        <option value="copper">Koppar</option>
+                        <option value="silver">Silver</option>
+                        <option value="gold">Guld</option>
+                    </select>
+                </div>
+
+                <!-- Reglage för Längd -->
+                <div>
+                    <label for="input-length">Längd (<i>l</i>) <span id="label-length" class="value-label">100 cm</span></label>
+                    <input type="range" id="input-length" min="20" max="200" value="100">
+                </div>
+
+                <!-- Reglage för Area -->
+                <div>
+                    <label for="input-area">Tvärsnittsarea (<i>A</i>) <span id="label-area" class="value-label">0.50 mm²</span></label>
+                    <input type="range" id="input-area" min="5" max="100" value="50">
+                </div>
+            </div>
+        </div>
+
+        <!-- GRAFIK -->
+        <div class="svg-container">
+            
+            <!-- SPÄNNINGSREGLAGE -->
+            <div class="battery-control">
+                <div class="battery-header">
+                    <span>Källspänning</span>
+                    <span id="label-voltage-source" class="voltage-val">1.5 V</span>
+                </div>
+                <input type="range" id="input-voltage" min="0.5" max="2.5" step="0.1" value="1.5">
+            </div>
+
+            <svg id="circuit-svg" width="400" height="400" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+                <!-- Kretslinjer -->
+                <path d="M 50 50 L 50 120" class="circuit-line" /> 
+                <path d="M 50 180 L 50 250" class="circuit-line" />
+                <path d="M 350 50 L 350 250" class="circuit-line" />
+                <path d="M 50 50 L 180 50" class="circuit-line" />
+                <path d="M 220 50 L 350 50" class="circuit-line" />
+
+                <!-- Kablar -->
+                <line id="wire-left" x1="50" y1="250" x2="120" y2="250" class="circuit-line" />
+                <line id="wire-right" x1="280" y1="250" x2="350" y2="250" class="circuit-line" />
+
+                <!-- Batteri -->
+                <line x1="180" y1="30" x2="180" y2="70" class="circuit-line" />
+                <line x1="220" y1="40" x2="220" y2="60" class="circuit-line" style="stroke-width: 4;" />
+                
+                <!-- Amperemeter -->
+                <circle cx="50" cy="150" r="30" class="circuit-line" fill="#ffffff" />
+                <text x="50" y="152" class="component-text">A</text>
+
+                <!-- Resistor (Cylinder) -->
+                <g id="resistor-group">
+                    <rect id="res-body" x="120" y="235" width="160" height="30" class="resistor-body" />
+                    <ellipse id="res-cap-left" cx="120" cy="250" rx="10" ry="15" class="resistor-face" />
+                    <ellipse id="res-cap-right" cx="280" cy="250" rx="10" ry="15" class="resistor-face" />
+                </g>
+                
+                <!-- Eld -->
+                <text id="fire-effect" x="200" y="250" text-anchor="middle" dominant-baseline="middle" class="fire-anim">🔥</text>
+
+                <!-- Voltmeter -->
+                <path d="M 80 250 L 80 340 L 170 340" class="circuit-line" fill="none" />
+                <path d="M 320 250 L 320 340 L 230 340" class="circuit-line" fill="none" />
+                <circle cx="200" cy="340" r="30" class="circuit-line" fill="#ffffff" />
+                <text x="200" y="342" class="component-text">V</text>
+            </svg>
+        </div>
+
+        <!-- MÄTKNAPP -->
+        <div class="btn-container">
+            <button id="btn-measure" class="btn-measure">
+                <!-- SVG ikon för blixt -->
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                </svg>
+                Gör mätning
+            </button>
+        </div>
+
+        <!-- MÄTVÄRDEN -->
+        <div class="display-area">
+            <div class="display-title">Amperemätaren och voltmätaren visar:</div>
+            <div class="display-grid">
+                <div class="meter-box">
+                    <div class="meter-label">Ström (I)</div>
+                    <div class="meter-value val-amp" id="display-current">--</div>
+                </div>
+                <div class="meter-box">
+                    <div class="meter-label">Spänning (U)</div>
+                    <div class="meter-value val-volt" id="display-voltage">--</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // DOM Element
+        const inputLength = document.getElementById('input-length');
+        const inputArea = document.getElementById('input-area');
+        const inputMaterial = document.getElementById('input-material');
+        const inputVoltage = document.getElementById('input-voltage'); 
+        const btnMeasure = document.getElementById('btn-measure');
+        
+        const labelLength = document.getElementById('label-length');
+        const labelArea = document.getElementById('label-area');
+        const labelVoltageSource = document.getElementById('label-voltage-source');
+
+        const displayCurrent = document.getElementById('display-current');
+        const displayVoltage = document.getElementById('display-voltage');
+
+        // SVG delar
+        const resBody = document.getElementById('res-body');
+        const resCapLeft = document.getElementById('res-cap-left');
+        const resCapRight = document.getElementById('res-cap-right');
+        const wireLeft = document.getElementById('wire-left');
+        const wireRight = document.getElementById('wire-right');
+        const fireEffect = document.getElementById('fire-effect'); 
+
+        // Resistivitet (Ohm meter)
+        const materials = {
+            constantan: { rho: 49e-8, colorBody: '#d1d5db', colorFace: '#e5e7eb' },
+            nichrome:   { rho: 110e-8, colorBody: '#9ca3af', colorFace: '#d1d5db' },
+            silver:     { rho: 1.59e-8, colorBody: '#e2e8f0', colorFace: '#f1f5f9' },
+            copper:     { rho: 1.67e-8, colorBody: '#fb923c', colorFace: '#fdba74' },
+            gold:       { rho: 2.35e-8, colorBody: '#eab308', colorFace: '#fde047' },
+            aluminium:  { rho: 2.65e-8, colorBody: '#94a3b8', colorFace: '#cbd5e1' },
+            iron:       { rho: 9.70e-8, colorBody: '#57534e', colorFace: '#78716c' }
+        };
+
+        const INTERNAL_RESISTANCE = 0.1; 
+        const CURRENT_LIMIT = 17.0; 
+
+        const centerX = 200;
+        const centerY = 250;
+        const ellipseXRadius = 8; 
+
+        let measurementsSinceLastGlitch = 10; 
+
+        function updateVisuals() {
+            const lengthPx = parseInt(inputLength.value); 
+            const areaValue = parseInt(inputArea.value) / 100;
+            const voltageValue = parseFloat(inputVoltage.value);
+            const materialKey = inputMaterial.value;
+            const materialData = materials[materialKey];
+
+            labelLength.innerText = lengthPx + " cm"; 
+            labelArea.innerText = areaValue.toFixed(2) + " mm²";
+            labelVoltageSource.innerText = voltageValue.toFixed(1) + " V";
+            
+            displayCurrent.innerText = "--";
+            displayVoltage.innerText = "--";
+            fireEffect.style.display = 'none'; 
+
+            const visualRadius = Math.max(3, areaValue * 20); 
+            const leftX = centerX - (lengthPx / 2);
+            const rightX = centerX + (lengthPx / 2);
+            
+            resBody.setAttribute('x', leftX);
+            resBody.setAttribute('y', centerY - visualRadius);
+            resBody.setAttribute('width', lengthPx);
+            resBody.setAttribute('height', visualRadius * 2);
+            resBody.style.fill = materialData.colorBody;
+
+            resCapLeft.style.fill = materialData.colorFace;
+            resCapRight.style.fill = materialData.colorFace;
+
+            resCapLeft.setAttribute('cx', leftX);
+            resCapLeft.setAttribute('cy', centerY);
+            resCapLeft.setAttribute('rx', ellipseXRadius);
+            resCapLeft.setAttribute('ry', visualRadius);
+
+            resCapRight.setAttribute('cx', rightX);
+            resCapRight.setAttribute('cy', centerY);
+            resCapRight.setAttribute('rx', ellipseXRadius);
+            resCapRight.setAttribute('ry', visualRadius);
+
+            wireLeft.setAttribute('x2', leftX);
+            wireRight.setAttribute('x1', rightX);
+        }
+
+        function performMeasurement() {
+            const lengthPx = parseInt(inputLength.value); 
+            const areaValue = parseInt(inputArea.value) / 100; // mm2
+            const currentVoltageSource = parseFloat(inputVoltage.value); 
+            const materialKey = inputMaterial.value;
+            const materialData = materials[materialKey];
+
+            const lengthM = lengthPx / 100; 
+            const areaM2 = areaValue * 1e-6; 
+
+            const R_wire = materialData.rho * lengthM / areaM2;
+            const R_total = R_wire + INTERNAL_RESISTANCE;
+            const I_exact = currentVoltageSource / R_total;
+            const U_exact = I_exact * R_wire;
+
+            if (I_exact > CURRENT_LIMIT) {
+                fireEffect.style.display = 'block';
+                displayCurrent.innerText = "0.00 A";
+                displayVoltage.innerText = "0.00 V";
+                return;
+            }
+
+            let isGlitch = false;
+            if (measurementsSinceLastGlitch >= 6) {
+                if (Math.random() < 0.10) {
+                    isGlitch = true;
+                    measurementsSinceLastGlitch = 0; 
+                }
+            }
+
+            let I_display, U_display;
+
+            if (isGlitch) {
+                const glitchType = Math.random();
+                if (glitchType < 0.5) {
+                    I_display = 0;
+                    U_display = 0;
+                } else {
+                    I_display = Math.random() * 5; 
+                    U_display = Math.random() * 5; 
+                }
+            } else {
+                measurementsSinceLastGlitch++; 
+                const errorFactorI = 1 + (Math.random() - 0.5) * 0.10; 
+                const errorFactorU = 1 + (Math.random() - 0.5) * 0.10;
+                I_display = I_exact * errorFactorI;
+                U_display = U_exact * errorFactorU;
+            }
+
+            if (I_display < 1.0 && I_display > 0) {
+                displayCurrent.innerText = (I_display * 1000).toFixed(0) + " mA";
+            } else {
+                displayCurrent.innerText = I_display.toFixed(2) + " A";
+            }
+
+            if (U_display < 0.1 && U_display > 0) {
+                displayVoltage.innerText = (U_display * 1000).toFixed(1) + " mV";
+            } else {
+                displayVoltage.innerText = U_display.toFixed(2) + " V";
+            }
+        }
+
+        inputLength.addEventListener('input', updateVisuals);
+        inputArea.addEventListener('input', updateVisuals);
+        inputMaterial.addEventListener('change', updateVisuals);
+        inputVoltage.addEventListener('input', updateVisuals); 
+        btnMeasure.addEventListener('click', performMeasurement);
+
+        updateVisuals();
+    </script>
+</body>
+</html>
