@@ -1,1 +1,129 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Träningsschema – Kalle</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #0f0f0f;
+    color: #e8e8e8;
+    min-height: 100vh;
+  }
+
+  header {
+    padding: 20px 24px 12px;
+    border-bottom: 1px solid #222;
+  }
+
+  header h1 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: #fff;
+  }
+
+  header p {
+    font-size: 0.78rem;
+    color: #666;
+    margin-top: 2px;
+  }
+
+  .stop-banner {
+    margin: 16px 16px 0;
+    background: #1a0a0a;
+    border: 1px solid #5a1a1a;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.75rem;
+    color: #cc4444;
+    line-height: 1.5;
+  }
+
+  .week-tabs {
+    display: flex;
+    gap: 8px;
+    padding: 16px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .week-tabs::-webkit-scrollbar { display: none; }
+
+  .week-btn {
+    flex-shrink: 0;
+    padding: 8px 14px;
+    border-radius: 20px;
+    border: 1px solid #333;
+    background: #1a1a1a;
+    color: #aaa;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .week-btn:hover { border-color: #555; color: #ddd; }
+  .week-btn.active { background: #c8a84b; border-color: #c8a84b; color: #000; font-weight: 600; }
+  .week-btn.deload { border-color: #2a3a2a; color: #5a7a5a; }
+  .week-btn.deload.active { background: #2a5a2a; border-color: #2a5a2a; color: #90d090; }
+
+  .week-info { padding: 0 16px 12px; font-size: 0.78rem; color: #666; }
+  .week-info .rpe-badge { display: inline-block; background: #1e1e1e; border: 1px solid #333; border-radius: 12px; padding: 3px 10px; font-size: 0.75rem; color: #c8a84b; margin-top: 4px; }
+
+  .day-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 0 16px 16px; }
+  .day-btn { padding: 16px 10px; border-radius: 12px; border: 1px solid #2a2a2a; background: #161616; cursor: pointer; text-align: center; transition: all 0.15s; }
+  .day-btn:hover { border-color: #444; background: #1e1e1e; }
+  .day-btn.active { border-color: #c8a84b; background: #1a1600; }
+  .day-btn .day-name { font-size: 0.85rem; font-weight: 600; color: #fff; margin-bottom: 4px; }
+  .day-btn .day-focus { font-size: 0.68rem; color: #666; line-height: 1.3; }
+  .day-btn.active .day-focus { color: #998830; }
+
+  .workout-content { padding: 0 16px 32px; display: none; }
+  .workout-content.visible { display: block; }
+  .section { margin-bottom: 20px; }
+  .section-title { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #c8a84b; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid #222; }
+  .exercise { background: #161616; border: 1px solid #2a2a2a; border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; }
+  .exercise-name { font-size: 0.88rem; font-weight: 600; color: #fff; margin-bottom: 6px; }
+  .sets { display: flex; flex-direction: column; gap: 3px; }
+  .set-row { font-size: 0.78rem; color: #aaa; line-height: 1.4; }
+  .set-row.topset { color: #c8a84b; font-weight: 600; }
+  .set-row .rpe-tag { display: inline-block; background: #1e1800; border: 1px solid #3a3000; border-radius: 8px; padding: 0px 6px; font-size: 0.7rem; color: #c8a84b; margin-left: 4px; }
+  .note { font-size: 0.72rem; color: #555; margin-top: 6px; font-style: italic; line-height: 1.4; }
+  .singlar-info { background: #0f1a0f; border: 1px solid #2a4a2a; border-radius: 10px; padding: 12px 14px; font-size: 0.78rem; color: #7ab87a; line-height: 1.6; margin-bottom: 8px; }
+  .singlar-info strong { color: #90d090; }
+  .deload-box { background: #0f1a0f; border: 1px solid #2a4a2a; border-radius: 10px; padding: 16px; font-size: 0.82rem; color: #7ab87a; line-height: 1.8; }
+  .empty-state { padding: 40px 16px; text-align: center; color: #444; font-size: 0.82rem; }
+  @media (max-width: 380px) { .day-btn .day-name { font-size: 0.78rem; } .day-btn .day-focus { font-size: 0.62rem; } }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>TRÄNINGSSCHEMA</h1>
+  <p>Cykel 2 · Mark → 300 kg · Autoreglering</p>
+</header>
+
+<div class="stop-banner">
+  ⛔ HÅRT STOP-REGEL: Om toppset mark känns tyngre än programmerat RPE → avsluta, –10 kg på backoffs. Kör ALDRIG vidare uppåt.
+</div>
+
+<div class="week-tabs" id="weekTabs"></div>
+<div class="week-info" id="weekInfo"></div>
+<div class="day-grid" id="dayGrid"></div>
+<div class="workout-content" id="workoutContent"></div>
+
+<script>
+const SCHEMA = {weeks:[{id:"v1",label:"V1",dates:"25–31 maj",rpe:"@7",theme:"Inkörnig, konservativ start",note:"Lätt. Det ska kännas lätt. Det är meningen.",days:{"Måndag":{focus:"Marklyft tung\nÖverkropp",sections:[{title:"Marklyft",exercises:[{name:"Marklyft",sets:[{label:"Toppset",text:"220 × 3",rpe:"@7",topset:true},{label:"Backoff ×3",text:"205 × 4 × 3"}],note:"3 rep kvar i tanken. Om det inte känns så → sluta tidigare."},{name:"CG-bänk",sets:[{label:"Toppset",text:"105 × 5",rpe:"@7",topset:true},{label:"Backoff ×2",text:"97.5 × 5 × 2"}]}]},{title:"Accessoarer",exercises:[{name:"Lat pulldown (brett grepp)",sets:[{text:"3 × 10 @ 70–75 kg"}]},{name:"Dips (kroppsvikt eller +10 kg)",sets:[{text:"3 × 10"}]},{name:"Face pulls (kabel)",sets:[{text:"3 × 20 @ lätt"}],note:"Fokus: bakre delts, external rotation"},{name:"Ab wheel (knän)",sets:[{text:"3 × 10"}]}]}]},"Onsdag":{focus:"Bänk tung\nBakre kedja",sections:[{title:"Bänkpress",exercises:[{name:"Bänkpress",sets:[{label:"Toppset",text:"120 × 4",rpe:"@7",topset:true},{label:"Backoff ×3",text:"110 × 5 × 3"}]},{name:"RDL",sets:[{text:"3 × 8 @ 130–140 kg"}],note:"Fokus: sträck och kontroll, inte tyngd"}]},{title:"Accessoarer",exercises:[{name:"Sittande kabelrodd (neutral grepp)",sets:[{text:"3 × 12 @ 65–70 kg"}]},{name:"Leg curl (maskin, liggande)",sets:[{text:"3 × 12"}]},{name:"DB axelpress",sets:[{text:"3 × 12 @ 24–28 kg"}]},{name:"Goblet squat / BSS",sets:[{text:"3 × 10 @ 40 kg / 20 kg/hand"}]},{name:"Dead bug",sets:[{text:"2 × 8/sida"}],note:"Långsam och kontrollerad"}]}]},"Fredag":{focus:"Mark singlar\nÖverkropp pull",singlar:{rpe:"@7",start:"~200 @5, stega med 10–15 kg/singel",expected:"~237.5–242.5 @7",stop:"Gör INTE ett gram mer den dagen"},sections:[{title:"Marklyft singlar",singlar:true},{title:"Bänk backoffs",exercises:[{name:"Bänkpress (lätt, ingen prestation)",sets:[{text:"100 × 5 × 3"}]}]},{title:"Accessoarer",exercises:[{name:"Lat pulldown (smalt underhandsgrepp)",sets:[{text:"3 × 10 @ 65–70 kg"}]},{name:"DB rodd (en arm)",sets:[{text:"3 × 10 @ 42.5–47.5 kg/hand"}]},{name:"Biceps curl (stång eller DB)",sets:[{text:"3 × 12 @ 17.5–20 kg"}]},{name:"Rear delt fly (böjt framåt)",sets:[{text:"3 × 15 @ 12–14 kg"}]},{name:"Plankor",sets:[{text:"2 × 40 sek"}]}]}]}}},{id:"v2",label:"V2",dates:"1–7 jun",rpe:"@7.5",theme:"Lite mer",days:{"Måndag":{focus:"Marklyft tung\nÖverkropp",sections:[{title:"Marklyft",exercises:[{name:"Marklyft",sets:[{label:"Toppset",text:"225 × 3",rpe:"@7.5",topset:true},{label:"Backoff ×3",text:"210 × 4 × 3"}]},{name:"CG-bänk",sets:[{label:"Toppset",text:"110 × 4",rpe:"@7.5",topset:true},{label:"Backoff ×2",text:"100 × 5 × 2"}]}]},{title:"Accessoarer",exercises:[{name:"Lat pulldown",sets:[{text:"3 × 10 @ 72.5–77.5 kg"}]},{name:"Dips (+10–15 kg)",sets:[{text:"3 × 10"}]},{name:"Face pulls",sets:[{text:"3 × 20"}]},{name:"Ab wheel",sets:[{text:"3 × 10"}]}]}]},"Onsdag":{focus:"Bänk tung\nBakre kedja",sections:[{title:"Bänkpress",exercises:[{name:"Bänkpress",sets:[{label:"Toppset",text:"125 × 4",rpe:"@7.5",topset:true},{label:"Backoff ×3",text:"115 × 5 × 3"}]},{name:"RDL",sets:[{text:"3 × 8 @ 135–145 kg"}]}]},{title:"Accessoarer",exercises:[{name:"Kabelrodd",sets:[{text:"3 × 12 @ 67.5–72.5 kg"}]},{name:"Leg curl",sets:[{text:"3 × 12"}]},{name:"DB axelpress",sets:[{text:"3 × 12 @ 26–30 kg"}]},{name:"Goblet squat / BSS",sets:[{text:"3 × 10"}]},{name:"Dead bug",sets:[{text:"2 × 8/sida"}]}]}]},"Fredag":{focus:"Mark singlar\nÖverkropp pull",singlar:{rpe:"@7.5",start:"~200 @5, stega med 10–15 kg/singel",expected:"~242.5–247.5 @7.5",stop:"Stopp vid @7.5"},sections:[{title:"Marklyft singlar",singlar:true},{title:"Bänk backoffs",exercises:[{name:"Bänkpress",sets:[{text:"105 × 5 × 3"}]}]},{title:"Accessoarer",exercises:[{name:"Lat pulldown (smalt underhand)",sets:[{text:"3 × 10 @ 67.5–72.5 kg"}]},{name:"DB rodd (en arm)",sets:[{text:"3 × 10 @ 45–50 kg/hand"}]},{name:"Biceps curl",sets:[{text:"3 × 12 @ 19–22 kg"}]},{name:"Rear delt fly",sets:[{text:"3 × 15 @ 13–15 kg"}]},{name:"Plankor",sets:[{text:"2 × 40 sek"}]}]}]}}},{id:"v3",label:"V3",dates:"8–14 jun",rpe:"@8",theme:"Arbetsintensitet",note:"Nu jobbar du. Men gå ALDRIG ur @8-zonen.",days:{"Måndag":{focus:"Marklyft tung\nÖverkropp",sections:[{title:"Marklyft",exercises:[{name:"Marklyft (byter till dubbler)",sets:[{label:"Toppset",text:"232.5 × 2",rpe:"@8",topset:true},{label:"Backoff ×3",text:"217.5 × 3 × 3"}]},{name:"CG-bänk",sets:[{label:"Toppset",text:"112.5 × 4",rpe:"@8",topset:true},{label:"Backoff ×2",text:"102.5 × 4 × 2"}]}]},{title:"Accessoarer",exercises:[{name:"Lat pulldown",sets:[{text:"3 × 8–10 @ 77.5–82.5 kg"}]},{name:"Dips (+15–20 kg)",sets:[{text:"3 × 8–10"}]},{name:"Face pulls",sets:[{text:"3 × 20"}]},{name:"Ab wheel",sets:[{text:"3 × 10"}]}]}]},"Onsdag":{focus:"Bänk tung\nBakre kedja",sections:[{title:"Bänkpress",exercises:[{name:"Bänkpress",sets:[{label:"Toppset",text:"130 × 3",rpe:"@8",topset:true},{label:"Backoff ×3",text:"120 × 4 × 3"}]},{name:"RDL",sets:[{text:"3 × 8 @ 140–150 kg"}]}]},{title:"Accessoarer",exercises:[{name:"Kabelrodd",sets:[{text:"3 × 10 @ 72.5–77.5 kg"}]},{name:"Leg curl",sets:[{text:"3 × 12"}]},{name:"DB axelpress",sets:[{text:"3 × 10 @ 28–32 kg"}]},{name:"BSS",sets:[{text:"3 × 8/leg @ 22.5–25 kg/hand"}]},{name:"Dead bug",sets:[{text:"2 × 8/sida"}]}]}]},"Fredag":{focus:"Mark singlar\nÖverkropp pull",singlar:{rpe:"@8",start:"~200 @5, stega med 10–15 kg/singel",expected:"~247.5–252.5 @8",stop:"Om 247.5 känns @8 → klart. Pressa inte upp till 252.5."},sections:[{title:"Marklyft singlar",singlar:true},{title:"Bänk backoffs",exercises:[{name:"Bänkpress",sets:[{text:"110 × 4 × 3"}]}]},{title:"Accessoarer",exercises:[{name:"Lat pulldown (smalt underhand)",sets:[{text:"3 × 8–10 @ 72.5–77.5 kg"}]},{name:"DB rodd (en arm)",sets:[{text:"3 × 10 @ 47.5–52.5 kg/hand"}]},{name:"Biceps curl",sets:[{text:"3 × 10 @ 20–24 kg"}]},{name:"Rear delt fly",sets:[{text:"3 × 15 @ 14–16 kg"}]},{name:"Plankor",sets:[{text:"2 × 45 sek"}]}]}]}}},{id:"v4",label:"V4",dates:"15–18 jun",rpe:"@8 + Volym",theme:"Blockets topp – volym upp",note:"Fredag 19 jun = resdag. Kör BARA Måndag + Onsdag.",days:{"Måndag":{focus:"Marklyft tung\nÖverkropp",dateNote:"16 juni",sections:[{title:"Marklyft (extra backoff-set)",exercises:[{name:"Marklyft",sets:[{label:"Toppset",text:"237.5 × 2",rpe:"@8",topset:true},{label:"Backoff ×4",text:"222.5 × 3 × 4"}],note:"HARD STOP – om det är @8.5 vid 235 → kör 235 och avsluta"},{name:"CG-bänk",sets:[{label:"Toppset",text:"115 × 3",rpe:"@8",topset:true},{label:"Backoff ×3",text:"105 × 4 × 3"}]}]},{title:"Accessoarer",exercises:[{name:"Lat pulldown",sets:[{text:"3 × 8 @ 80–85 kg"}]},{name:"Dips (+20 kg)",sets:[{text:"3 × 8–10"}]},{name:"Face pulls",sets:[{text:"3 × 20"}]},{name:"Ab wheel",sets:[{text:"3 × 10"}]}]}]},"Onsdag":{focus:"Bänk tung\nSISTA PASS",dateNote:"18 juni – sista pass",sections:[{title:"Bänkpress",exercises:[{name:"Bänkpress",sets:[{label:"Toppset",text:"132.5 × 3",rpe:"@8",topset:true},{label:"Backoff ×3",text:"122.5 × 4 × 3"}]},{name:"RDL",sets:[{text:"3 × 8 @ 145–155 kg"}]}]},{title:"Accessoarer",exercises:[{name:"Kabelrodd",sets:[{text:"3 × 10 @ 75–80 kg"}]},{name:"Leg curl",sets:[{text:"3 × 12"}]},{name:"DB axelpress",sets:[{text:"3 × 10 @ 28–32 kg"}]},{name:"BSS",sets:[{text:"3 × 8/leg"}]},{name:"Dead bug",sets:[{text:"2 × 8/sida"}]}],note:"Avsluta pass välmående. Ingen heroism. Resan börjar på fredag."}]},"Fredag":null}},{id:"v5",label:"Deload",dates:"19–26 jun",rpe:"—",theme:"Tvingad utlandsdeload",deload:true,days:{}}]};
+let activeWeek=null,activeDay=null;
+function init(){renderWeekTabs();let w=SCHEMA.weeks.find(w=>!w.deload)||SCHEMA.weeks[0];selectWeek(w.id);}
+function renderWeekTabs(){const c=document.getElementById('weekTabs');c.innerHTML='';SCHEMA.weeks.forEach(w=>{const b=document.createElement('button');b.className='week-btn'+(w.deload?' deload':'');b.textContent=w.label;b.dataset.id=w.id;b.onclick=()=>selectWeek(w.id);c.appendChild(b);});}
+function selectWeek(id){activeWeek=id;activeDay=null;document.querySelectorAll('.week-btn').forEach(b=>b.classList.toggle('active',b.dataset.id===id));const w=SCHEMA.weeks.find(w=>w.id===id);if(!w)return;const info=document.getElementById('weekInfo');info.innerHTML=`<span style="color:#888">${w.dates}</span>${w.note?`<br><span style="color:#666;font-style:italic">"${w.note}"</span>`:''}<br><span class="rpe-badge">${w.rpe}${w.theme?' · '+w.theme:''}</span>`;renderDayGrid(w);const content=document.getElementById('workoutContent');content.classList.remove('visible');content.innerHTML='';}
+function renderDayGrid(w){const g=document.getElementById('dayGrid');g.innerHTML='';if(w.deload){g.innerHTML=`<div style="grid-column:1/-1"><div class="deload-box">🌍 <strong>Utlandsresa – Deload</strong><br><br>Om gym finns:<br>· RDL med hantlar: 3 × 10 @ lätt<br>· Hantelpress liggande: 3 × 12<br>· Chins eller rodd: 3 × 10<br>· BSS: 3 × 10/leg<br>· Core valfritt<br><br>Om inget gym: promenader, stretching, vila.</div></div>`;return;}['Måndag','Onsdag','Fredag'].forEach(dn=>{const day=w.days[dn];const b=document.createElement('div');b.className='day-btn'+(day===null?' disabled':'');b.dataset.day=dn;if(day===null){b.innerHTML=`<div class="day-name">${dn}</div><div class="day-focus" style="color:#3a3a3a">Resdag</div>`;}else{b.innerHTML=`<div class="day-name">${dn}</div><div class="day-focus">${(day.dateNote?day.dateNote+'<br>':'')+(day.focus||'').replace(/\n/g,'<br>')}</div>`;b.onclick=()=>selectDay(dn);}g.appendChild(b);});}
+function selectDay(dn){activeDay=dn;document.querySelectorAll('.day-btn').forEach(b=>b.classList.toggle('active',b.dataset.day===dn));const w=SCHEMA.weeks.find(w=>w.id===activeWeek);const day=w.days[dn];if(!day)return;renderWorkout(day,w);}
+function renderWorkout(day,w){const c=document.getElementById('workoutContent');c.classList.add('visible');let html='';day.sections.forEach(s=>{html+=`<div class="section"><div class="section-title">${s.title}</div>`;if(s.singlar&&day.singlar){const si=day.singlar;html+=`<div class="singlar-info"><strong>Stopp vid ${si.rpe}</strong><br>Start: ${si.start}<br>Förväntad landning: <strong>${si.expected}</strong><br>⚠️ ${si.stop}</div>`;}if(s.exercises){s.exercises.forEach(ex=>{html+=`<div class="exercise"><div class="exercise-name">${ex.name}</div><div class="sets">`;ex.sets.forEach(set=>{const cls=set.topset?'set-row topset':'set-row';const rpe=set.rpe?`<span class="rpe-tag">${set.rpe}</span>`:'';html+=`<div class="${cls}">${set.label?set.label+': ':''}${set.text}${rpe}</div>`;});html+=`</div>`;if(ex.note)html+=`<div class="note">${ex.note}</div>`;html+=`</div>`;});}if(s.note)html+=`<div class="note" style="padding:0 4px;margin-top:8px">${s.note}</div>`;html+=`</div>`;});c.innerHTML=html;c.scrollIntoView({behavior:'smooth',block:'start'});}
+init();
+</script>
+</body>
+</html>
